@@ -2,6 +2,44 @@
 
 API Central de Logs para ingestão e consulta de logs de aplicações internas.
 
+## 🌐 Ecossistema LogHub
+
+O LogHub API faz parte de um ecossistema completo para gerenciamento de logs. Conheça os outros projetos:
+
+| Projeto | Descrição | Link |
+|---------|-----------|------|
+| **LogHub API** | Backend RESTful para coleta, armazenamento e consulta de logs | Este repositório |
+| **LogHub SDK** | SDK para integração fácil das suas aplicações com o LogHub | [loghub-sdk](https://github.com/BrininhoBru/loghub-sdk) |
+| **LogHub UI** | Interface web para visualização e diagnóstico de logs | [loghub-ui](https://github.com/BrininhoBru/loghub-ui) |
+
+### Arquitetura
+
+```mermaid
+flowchart LR
+    subgraph Apps["🖥️ Suas Aplicações"]
+        A1[App 1 + SDK]
+        A2[App 2 + SDK]
+        A3[App N + SDK]
+    end
+
+    subgraph Backend["⚙️ LogHub API"]
+        API[REST API]
+        DB[(Database)]
+        API --> DB
+    end
+
+    subgraph Frontend["🌐 LogHub UI"]
+        UI[Interface Web]
+    end
+
+    A1 -->|logs| API
+    A2 -->|logs| API
+    A3 -->|logs| API
+    UI -->|consulta| API
+```
+
+---
+
 ## 📋 Visão Geral
 
 O **LogHub API** é um MVP para receber, persistir e consultar logs de níveis `ERROR`, `WARN`, `INFO`, `DEBUG` e `TRACE` enviados por aplicações internas via HTTP.
@@ -277,6 +315,7 @@ src/main/java/io/loghub/loghub_api/
 ├── filter/
 │   └── ApiKeyFilter.java           # Autenticação
 ├── config/
+│   ├── CorsConfig.java             # Configuração de CORS
 │   └── GlobalExceptionHandler.java # Tratamento de erros
 └── LoghubApiApplication.java       # Classe principal
 ```
@@ -303,6 +342,40 @@ spring.profiles.active=dev
 | `DATABASE_URL` | URL do PostgreSQL | ✅ |
 | `DATABASE_USERNAME` | Usuário do banco | ✅ |
 | `DATABASE_PASSWORD` | Senha do banco | ✅ |
+
+---
+
+## 🌐 Configuração de CORS
+
+A API possui configuração de CORS para permitir requisições de aplicações frontend.
+
+### Arquivo de Configuração
+
+O arquivo `src/main/java/io/loghub/loghub_api/config/CorsConfig.java` define as origens permitidas.
+
+### Origens Permitidas (Padrão)
+
+```java
+config.setAllowedOrigins(Arrays.asList(
+    "http://localhost:5173",  // Vite dev server
+    "http://localhost:3000",  // Create React App
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000"
+));
+```
+
+### ⚠️ Importante: Configuração em Produção
+
+**Para ambientes de produção, você DEVE alterar o `CorsConfig.java`** para incluir apenas as origens do seu frontend:
+
+```java
+config.setAllowedOrigins(Arrays.asList(
+    "https://seu-frontend.com",
+    "https://www.seu-frontend.com"
+));
+```
+
+> **Nunca use `"*"` (todas as origens) em produção com `allowCredentials=true`**, pois isso é uma vulnerabilidade de segurança.
 
 ---
 
@@ -348,7 +421,7 @@ docker run -p 8080:8080 \
 
 ## 📝 Licença
 
-Este projeto é de uso interno.
+Este projeto está licenciado sob a [MIT License](LICENSE).
 
 ---
 
