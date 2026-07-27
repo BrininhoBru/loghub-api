@@ -4,9 +4,11 @@ import io.loghub.loghub_api.dto.*;
 import io.loghub.loghub_api.entity.LogEventEntity;
 import io.loghub.loghub_api.mapper.LogEventMapper;
 import io.loghub.loghub_api.repository.LogEventRepository;
+import io.loghub.loghub_api.repository.LogEventSpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,13 +42,9 @@ public class LogEventService {
             int page,
             int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<LogEventEntity> result = repository.findWithFilters(
-                application,
-                environment,
-                level,
-                from,
-                to,
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "timestamp"));
+        Page<LogEventEntity> result = repository.findAll(
+                LogEventSpecifications.withFilters(application, environment, level, from, to),
                 pageable
         );
 

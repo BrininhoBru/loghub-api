@@ -200,6 +200,38 @@ class LogControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/logs - Should filter by from/to date range")
+    void shouldFilterByDateRange() throws Exception {
+        Instant now = Instant.now();
+
+        LogEvent oldLog = new LogEvent(
+                "test-app", "dev", LogLevel.INFO, "Old message",
+                now.minusSeconds(3600), null, null, null
+        );
+        LogEvent recentLog = new LogEvent(
+                "test-app", "dev", LogLevel.INFO, "Recent message",
+                now, null, null, null
+        );
+
+        mockMvc.perform(post("/api/logs")
+                .header(API_KEY_HEADER, VALID_API_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(oldLog)));
+
+        mockMvc.perform(post("/api/logs")
+                .header(API_KEY_HEADER, VALID_API_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(recentLog)));
+
+        mockMvc.perform(get("/api/logs")
+                        .header(API_KEY_HEADER, VALID_API_KEY)
+                        .param("from", now.minusSeconds(60).toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].message").value("Recent message"));
+    }
+
+    @Test
     @DisplayName("GET /health - Should return health status without API key")
     void shouldReturnHealthWithoutApiKey() throws Exception {
         mockMvc.perform(get("/health"))
